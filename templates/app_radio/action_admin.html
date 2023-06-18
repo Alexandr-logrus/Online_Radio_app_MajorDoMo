@@ -29,10 +29,51 @@
 				<h4 class="modal-title"><#LANG_APP_INTERNET_RADIO#> ver. [#VER#]</h4>
 			</div>
 			<div class="modal-body">
-				<p> <#LANG_MODULE_PLAYING_ONLINE_RADIO#>.<br>
+				<p><#LANG_MODULE_PLAYING_ONLINE_RADIO#>.<br>
 				<#LANG_MODULE_DISCUSSION#> <a href="http://smartliving.ru/forum/viewtopic.php?f=5&t=1402" target="_blank"><#LANG_HERE#></a>.<br>
+				</p>
+
+				<hr size="1">
+				<p><#LANG_PLAYERS_SUPORTED#>:<br>
+				VLC, XBMC, Foobar2000, VLC over HTTP, MPD.
+				<br>
+				<#LANG_VOLUME_CONTROL_IMPLEMENTED#>:
+				<br>
+				XBMC, VLC over HTTP, MPD.
+				</p>
+
+				<hr size="1">
+				<p>
+				<#LANG_CAL_IN_MENU#>:
+				<br>
+				<b>&#091#module name="app_radio" mode="menu"#&#093</b>
+				<br><br>
+				<#LANG_USE_SCRIPT#>:
+				<br>
+				<b>cm('RadioSetting.Control', array('play'));</b> <#LANG_OR#> <b>cm('RadioSetting.Control', array('cmd'=>'play'));</b> - <#LANG_LAST_STATION#>.
+				<br>
+				<b>cm('RadioSetting.Control', array('stop'));</b> <#LANG_OR#> <b>cm('RadioSetting.Control', array('cmd'=>'stop'));</b> - <#LANG_STOP_PLAY#>.
+				<br>
+				<b>cm('RadioSetting.Control', array('vol34'));</b> <#LANG_OR#> <b>cm('RadioSetting.Control', array('vol'=>34));</b> - <#LANG_SET_VOLUME#> 34% (0-100).
+				<br>
+				<b>cm('RadioSetting.Control', array('sta:val'));</b> <#LANG_OR#> <b>cm('RadioSetting.Control', array('sta'=>'val'));</b> - <#LANG_SET_STATION_VAL#> <b>val</b>, <#LANG_WHERE#> <b>val</b> ID <#LANG_OR_STATION_NAME#>.
+				<br><br>
+				<#LANG_RESPECTIVELY#>:<br>
+				<b>cm('RadioSetting.Control', array('sta'=>'Зайцев.FM', 'cmd'=>'play', 'vol'=>30));</b>
+				<br><#LANG_OR#>
+				<br>
+				<b>cm('RadioSetting.Control', array('sta:Зайцев.FM'));</b>
+				<br>
+				<b>cm('RadioSetting.Control', array('play'));</b>
+				<br>
+				<b>cm('RadioSetting.Control', array('vol30'));</b>
+				<br>
+				<#LANG_ZAICEV_FM#>
+				</p>
+
 				<hr size="1">
 				<#LANG_SUPORT_AUTHOR#>:
+				<p>
 				<ul>
 					<li>Yandex: 410011477255886</li>
 					<li>WebMoney: R426095916500</li>

@@ -13,28 +13,53 @@
 </form>
 <p>
 <a href="?view_mode=edit_stations" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span> <#LANG_ADD_STATION#></a>
+<a href="?view_mode=clear_stations" class="btn btn-default"><span class="glyphicon glyphicon-minus"></span> <#LANG_CLEAR_STATION#></a>
 <a href="?view_mode=import_stations" class="btn btn-default"><span class="glyphicon glyphicon-import"></span> <#LANG_IMPORT_STATION#></a>
 <a href="?view_mode=export_stations" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> <#LANG_EXPORT_STATION#></a>
 </p>
 
-<!-- table список станций  -->
 
+<!-- table список станций  -->
 [#if RESULT#]
+<!-- paging -->
+[#if PAGES#]
+<div aria-label="Навигация страниц">
+  <ul class="pagination justify-content-center">
+   [#begin PREVPAGE#]
+    <li class="page-item">
+      <a class="page-link" href="?data_source=<#DATA_SOURCE#>&view_mode=<#VIEW_MODE#>&mode=<#MODE#>&save_qry=1&page=[#NUM#]" tabindex="-1">Назад</a>
+    </li>
+	[#end PREVPAGE#]
+	[#begin PAGES#]
+    [#if SELECTED#]<li class="page-item disabled"><a class="page-link" href="?data_source=<#DATA_SOURCE#>&view_mode=<#VIEW_MODE#>&mode=<#MODE#>&save_qry=1&page=[#NUM#]">[#NUM#]</a></li>[#endif#]
+    [#if !SELECTED#]<li class="page-item"><a class="page-link" href="?data_source=<#DATA_SOURCE#>&view_mode=<#VIEW_MODE#>&mode=<#MODE#>&save_qry=1&page=[#NUM#]">[#NUM#]</a></li>[#endif#]
+    [#end PAGES#]
+	[#begin NEXTPAGE#]
+	<li class="page-item">
+      <a class="page-link" href="?data_source=<#DATA_SOURCE#>&view_mode=<#VIEW_MODE#>&mode=<#MODE#>&save_qry=1&page=[#NUM#]">Вперед</a>
+    </li>
+	[#end NEXTPAGE#]
+  </ul>
+</div>
+[#endif PAGES#]
+<!-- / paging -->
 
 <table align="center" class="table table-condensed">
 <tbody>
-
 <tr>
  <td width="50" height="1" align="left">
    <b>ID</b>
  </td>
- <td height="10" align="center">
+ <td height="10" align="left">
    <b><#LANG_STATION_NAME#></b>
  </td>
- <td align="center">
+ <td align="left">
    <b><#LANG_STATION_URL#></b>
  </td>
  [#if "<#ACTION#>"=="admin"#]
+  <td width="1%">
+
+  </td>
   <td width="1%">
 
   </td>
@@ -45,6 +70,8 @@
 </tr>
 
 [#begin RESULT#]
+
+
 <tr>
  <td height="1" align="left">
    [#ID#]
@@ -57,10 +84,17 @@
  </td>
  [#if "<#ACTION#>"=="admin"#]
   <td width="1%">
+  [#if FAVORITE==1#]
+   <span class="glyphicon glyphicon-star"></span>
+  [#else FAVORITE#]
+   <span class="glyphicon glyphicon-star-empty"></span>
+  [#endif FAVORITE#]
+  </td>
+  <td width="1%">
    <a href="?view_mode=edit_stations&id=[#ID#]"  title="<#LANG_EDIT#>"><span class="glyphicon glyphicon-pencil"></span></a>
   </td>
   <td width="1%">
-   <a href="?view_mode=delete_stations&id=[#ID#]" onClick="return confirm('<#LANG_ARE_YOU_SURE#>')" title="<#LANG_DELETE#>"><span class="glyphicon glyphicon-remove"></span></a>
+   <a href="?view_mode=delete_stations&id=[#ID#]&page=[#page#]" onClick="return confirm('<#LANG_ARE_YOU_SURE#>')" title="<#LANG_DELETE#>"><span class="glyphicon glyphicon-remove"></span></a>
   </td>
  [#endif ACTION#]
 </tr>
@@ -76,39 +110,3 @@
 [#endif RESULT#]
 <!-- / results -->
 </td></tr></table>
-
-<p>
-<#LANG_PLAYERS_SUPORTED#>:
-<br>
-VLC, XBMC, Foobar2000, VLC over HTTP, MPD.
-<br>
- <#LANG_VOLUME_CONTROL_IMPLEMENTED#>:
-<br>
-XBMC, VLC over HTTP, MPD.
-<br><br>
-<#LANG_CAL_IN_MENU#>:
-<br>
-<b>&#091#module name="app_radio" mode="menu"#&#093</b>
-<br><br>
-<#LANG_USE_SCRIPT#>:
-<br>
-<b>cm('RadioSetting.Control', array('play'));</b> <#LANG_OR#> <b>cm('RadioSetting.Control', array('cmd'=>'play'));</b> - <#LANG_LAST_STATION#>.
-<br>
-<b>cm('RadioSetting.Control', array('stop'));</b> <#LANG_OR#> <b>cm('RadioSetting.Control', array('cmd'=>'stop'));</b> - <#LANG_STOP_PLAY#>.
-<br>
-<b>cm('RadioSetting.Control', array('vol34'));</b> <#LANG_OR#> <b>cm('RadioSetting.Control', array('vol'=>34));</b> - <#LANG_SET_VOLUME#> 34% (0-100).
-<br>
-<b>cm('RadioSetting.Control', array('sta:val'));</b> <#LANG_OR#> <b>cm('RadioSetting.Control', array('sta'=>'val'));</b> - <#LANG_SET_STATION_VAL#> <b>val</b>, <#LANG_WHERE#> <b>val</b> ID <#LANG_OR_STATION_NAME#>.
-<br><br>
-<#LANG_RESPECTIVELY#>:<br>
-<b>cm('RadioSetting.Control', array('sta'=>'Зайцев.FM', 'cmd'=>'play', 'vol'=>30));</b>
-<br><#LANG_OR#>
-<br>
-<b>cm('RadioSetting.Control', array('sta:Зайцев.FM'));</b>
-<br>
-<b>cm('RadioSetting.Control', array('play'));</b>
-<br>
-<b>cm('RadioSetting.Control', array('vol30'));</b>
-<br>
-<#LANG_ZAICEV_FM#>
-</p>

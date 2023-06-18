@@ -27,6 +27,13 @@
 	</div>
 </div>
 
+<div class="form-group">
+	<label class="col-sm-4 control-label"><#LANG_STATION_FAVORITE#>:</label>
+	<div class="col-sm-6">
+		<input type="checkbox" name="favorite" value="1"[#if FAVORITE="1"#] checked[#endif#]>
+	</div>
+</div>
+
  <div class="form-actions">
  [#if ID!=""#]
  <button type="submit" name="subm" value="Submit" class="btn btn-primary"><#LANG_SUBMIT#></button>

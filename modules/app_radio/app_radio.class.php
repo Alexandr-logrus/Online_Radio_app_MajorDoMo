@@ -8,18 +8,6 @@
  * @copyright Fedorov I.A.
  * @version 1.3.1 October 2014
  */
- /**
- * Translate LV EN
- * @author Guntars Strogonovs <gun4as@gmail.com>
- * @version 1.3.2 February 2020
- */
-/* if (file_exists(ROOT.'languages/app_radio_'.SETTINGS_SITE_LANGUAGE.'.php')) {
-     include_once(ROOT.'languages/app_radio_'.SETTINGS_SITE_LANGUAGE.'.php');
- }
- if (file_exists(ROOT.'languages/app_radio_default.php')) {
-     include_once(ROOT.'languages/app_radio_default.php');
- }
-*/
 
 class app_radio extends module
 {
@@ -49,16 +37,16 @@ class app_radio extends module
     function saveParams($data = 1)
     {
         $p = array();
-        if (IsSet($this->id)) {
+        if (isset($this->id)) {
             $p["id"] = $this->id;
         }
-        if (IsSet($this->view_mode)) {
+        if (isset($this->view_mode)) {
             $p["view_mode"] = $this->view_mode;
         }
-        if (IsSet($this->edit_mode)) {
+        if (isset($this->edit_mode)) {
             $p["edit_mode"] = $this->edit_mode;
         }
-        if (IsSet($this->tab)) {
+        if (isset($this->tab)) {
             $p["tab"] = $this->tab;
         }
         return parent::saveParams($p);
@@ -110,10 +98,10 @@ class app_radio extends module
         } else {
             $this->usual($out);
         }
-        if (IsSet($this->owner->action)) {
+        if (isset($this->owner->action)) {
             $out['PARENT_ACTION'] = $this->owner->action;
         }
-        if (IsSet($this->owner->name)) {
+        if (isset($this->owner->name)) {
             $out['PARENT_NAME'] = $this->owner->name;
         }
         $out['VIEW_MODE'] = $this->view_mode;
@@ -142,9 +130,10 @@ class app_radio extends module
         if ($this->data_source == 'app_radio' || $this->data_source == '') {
 
             $out['VER'] = '1.3.2';
-			global $select_terminal;
+            global $select_terminal;
             if ($select_terminal != '')
                 setGlobal('RadioSetting.PlayTerminal', $select_terminal);
+
             $out['PLAY_TERMINAL'] = getGlobal('RadioSetting.PlayTerminal');
             $res = SQLSelect("SELECT NAME FROM terminals");
             if ($res[0]) {
@@ -154,11 +143,8 @@ class app_radio extends module
             if ($this->view_mode == '' || $this->view_mode == 'view_stations') {
                 $this->view_stations($out);
             }
-            if ($this->view_mode == 'edit_stations') {
-                $this->edit_stations($out, $this->id);
-            }
-            if ($this->view_mode == 'delete_stations') {
-                $this->delete_stations($this->id);
+            if ($this->view_mode == 'clear_stations') {
+                $this->clear_stations();
                 $this->redirect("?");
             }
             if ($this->view_mode == 'import_stations') {
@@ -166,6 +152,15 @@ class app_radio extends module
             }
             if ($this->view_mode == 'export_stations') {
                 $this->export_stations($out);
+            }
+            if ($this->view_mode == 'edit_stations') {
+                $this->edit_stations($out, $this->id);
+            }
+            if ($this->view_mode == 'delete_stations') {
+                $this->delete_stations($this->id);
+                $this->redirect("?");
+                //$page = gr('page');
+                //$this->redirect("?md=app_radio&inst=adm&page=" . $page);
             }
         }
     }
@@ -178,15 +173,16 @@ class app_radio extends module
      */
     function usual(&$out)
     {
-
+        $out['notpaging'] = 1;
         $this->view_stations($out);
 
-        $current_volume = getGlobal('RadioSetting.VolumeLevel');
-        $last_stationID = getGlobal('RadioSetting.LastStationID');
+        $current_volume = gg('RadioSetting.VolumeLevel');
+        $last_stationID = gg('RadioSetting.LastStationID');
         $out['VOLUME'] = $current_volume;
 
         if ($last_stationID) {
-            for ($i = 0; $i < count($out['RESULT']); $i++) {
+            $total = count($out['RESULT']);
+            for ($i = 0; $i < $total; $i++) {
                 if ($last_stationID == $out['RESULT'][$i]['ID']) {
                     $out['RESULT'][$i]['SELECT'] = 1;
                     break;
@@ -205,13 +201,14 @@ class app_radio extends module
                 }
                 global $s_id;
                 if ($s_id != '') {
-                    for ($i = 0; $i < count($out['RESULT']); $i++) {
+                    $total = count($out['RESULT']);
+                    for ($i = 0; $i < $total; $i++) {
                         if ($s_id == $out['RESULT'][$i]['ID']) {
                             $out['PLAY'] = trim($out['RESULT'][$i]['stations']);
                             $last_stationID = $out['RESULT'][$i]['ID'];
-							$LastStationName = $out['RESULT'][$i]['name'];
-                            setGlobal('RadioSetting.LastStationID', $last_stationID);
-							sg('RadioSetting.LastStationName',$LastStationName);
+                            $LastStationName = $out['RESULT'][$i]['name'];
+                            sg('RadioSetting.LastStationID', $last_stationID);
+                            sg('RadioSetting.LastStationName', $LastStationName);
                             break;
                         }
                     }
@@ -219,16 +216,16 @@ class app_radio extends module
                     if ($out['RESULT'][0]['ID']) {
                         $out['PLAY'] = trim($out['RESULT'][0]['stations']);
                         $last_stationID = $out['RESULT'][0]['ID'];
-                        setGlobal('RadioSetting.LastStationID', $last_stationID);
+                        sg('RadioSetting.LastStationID', $last_stationID);
                     }
                 }
                 global $volume;
                 if ($volume != '') {
-                    setGlobal('RadioSetting.VolumeLevel', $volume);
+                    sg('RadioSetting.VolumeLevel', $volume);
                 }
 		global $play_terminal;
 		if ($play_terminal != '') {
-		    setGlobal('RadioSetting.PlayTerminal', $play_terminal);
+		    sg('RadioSetting.PlayTerminal', $play_terminal);
 		}
                 $this->select_player($out);
             }
@@ -243,31 +240,32 @@ class app_radio extends module
         }
     }
 
-	function change_station($val)
-	{
-		$res = SQLSelect("SELECT ID FROM app_radio WHERE name='$val'");
-		if ($res[0]['ID']) {
-			sg('RadioSetting.LastStationID',$res[0]['ID']);
-			sg('RadioSetting.LastStationName',$val);
-			$this->control('st_change');
+	function change_station($val) {
+		if (is_numeric($val)) {
+			$res = SQLSelect("SELECT * FROM app_radio WHERE ID='$val'");
+		} else {
+			$res = SQLSelect("SELECT * FROM app_radio WHERE name='$val'");
 		}
-		else
-		{
-			$log = getLogger($this);
-			$log->error('Станции '.$val.' не найдено!');
+
+		if ($res[0]['ID']) {
+			sg('RadioSetting.LastStationID', $res[0]['ID']);
+			sg('RadioSetting.LastStationName', $res[0]['name']);
+			$this->control('st_change');
+		} else {
+			//$log = getLogger($this);
+			//$log->error('Станции ' . $val . ' не найдено!');
 		}
 	}
 
-	function set_volume($vol)
-	{
+	function set_volume($vol) {
 		global $volume;
 		$volume = $vol;
 		$this->control('vol');
 	}
 
 	function control($state) {
-		// $log = getLogger($this);
-		// $log->error('control');
+		//$log = getLogger($this);
+		//$log->error('control');
 
 		$out = array();
 		global $cmd;
@@ -279,7 +277,7 @@ class app_radio extends module
 		}
 		if($cmd == 'play') {
 			$last_stationID = getGlobal('RadioSetting.LastStationID');
-			$res = SQLSelect('SELECT `stations` FROM `app_radio` WHERE `ID` = '.intval($last_stationID));
+			$res = SQLSelect('SELECT `stations` FROM `app_radio` WHERE `ID` = ' . intval($last_stationID));
 			if($res[0]['stations']) {
 				$out['PLAY'] = $res[0]['stations'];
 			} else {
@@ -298,48 +296,48 @@ class app_radio extends module
     function select_player(&$out){
         global $cmd;
         global $volume;
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
-        $play_terminal = getGlobal('RadioSetting.PlayTerminal');
-        echo $play_terminal;
-
-        $url=BASE_URL.ROOTHTML.'popup/app_player.html?ajax=1&play_terminal='.$play_terminal;
-
-        if($cmd=='play'){
-         sg('RadioSetting.On',1);
-         $url.="&command=play&param=".urlencode($out['PLAY']);
+        $play_terminal = gg('RadioSetting.PlayTerminal');
+        if($cmd == 'play'){
+            sg('RadioSetting.On', 1);
+            if (preg_match('/101.ru\/api\/channel\/getServers/is', $out['PLAY'])) {
+                //DebMes($out['PLAY']);
+                $json = file_get_contents($out['PLAY']);
+                $array = json_decode($json, true);
+                $out['PLAY'] = $array['result'][0]['urlStream'];
+                //DebMes($out['PLAY']);
+            }
+            playMedia($out['PLAY'], $play_terminal);
         }
-         else if($cmd=='stop'){
-         sg('RadioSetting.On',0);
-         $url.="&command=stop";
+         else if($cmd == 'stop'){
+            sg('RadioSetting.On', 0);
+            stopMedia($play_terminal);
+        } else if($cmd == 'vol') {
+            sg('RadioSetting.VolumeLevel', $volume);
+            setPlayerVolume($play_terminal, $volume);
         }
-        else if($cmd=='vol')
-        {
-         sg('RadioSetting.VolumeLevel', $volume);
-         $url.="&command=set_volume&param=".$volume;
-        }
-        curl_setopt($ch, CURLOPT_URL, $url);
-        $res=curl_exec($ch);
-        curl_close($ch);
     }
 
     function view_stations(&$out)
     {
-        //require(DIR_MODULES.$this->name.'/view_stations.php');
         $table_name = 'app_radio';
-        $res = SQLSelect("SELECT * FROM $table_name ORDER BY name");
+        $res = SQLSelect("SELECT * FROM $table_name ORDER BY FAVORITE DESC, name");
         if($res[0]['ID']) {
+            if (!$out['notpaging']) {
+                paging($res, 50, $out); // search result paging
+            }
             $out['RESULT'] = $res;
-			for($i = 0 ; $i < count($out['RESULT']) ; $i++) {
-				$out['RESULT'][$i]['position'] = $i + 1;
-			}
+            $total = count($out['RESULT']);
+            for($i = 0; $i < $total; $i++) {
+                $out['RESULT'][$i]['position'] = $i + 1;
+                $out['RESULT'][$i]['page'] = $out['CURRENT_PAGE'];
+            }
         }
+//DebMes($out);
     }
 
     function edit_stations(&$out, $id)
     {
-        //require(DIR_MODULES.$this->name.'/view_stations.php');
         $table_name = 'app_radio';
         $rec = SQLSelectOne("SELECT * FROM $table_name WHERE ID='$id'");
 
@@ -350,6 +348,7 @@ class app_radio extends module
             global $name;
             $rec['stations'] = $stations;
             $rec['name'] = $name;
+            $rec['FAVORITE'] = (int)gr('favorite');
             if ($rec['stations'] == '' || $rec['name'] == '') {
                 $out['ERR_stations'] = 1;
                 $ok = 0;
@@ -372,18 +371,19 @@ class app_radio extends module
 
     function import_stations(&$out)
     {
-        //require(DIR_MODULES.$this->name.'/app_quotes_import.inc.php');
         $table_name = 'app_radio';
         if ($this->mode == 'update') {
             global $file;
             if (file_exists($file)) {
-                $tmp = LoadFile($file);
-                $lines = mb_split("\n", $tmp);
-                $total_lines = count($lines);
-                for ($i = 0; $i < $total_lines; $i++) {
+                $data = LoadFile($file);
+                $data = str_replace("\r", '', $data);
+                $data = str_replace("\n\n", "\n", $data);
+                $lines = mb_split("\n", $data);
+                $total = count($lines);
+                for ($i = 0; $i < $total; $i++) {
                     $rec = array();
                     $rec_ok = 1;
-                    list($rec['name'], $rec['stations']) = explode(";", $lines[$i]);
+                    list($rec['name'], $rec['stations'], $rec['FAVORITE']) = explode(";", $lines[$i]);
                     if ($rec['stations'] == '') {
                         $rec_ok = 0;
                     }
@@ -391,6 +391,7 @@ class app_radio extends module
                         $old = SQLSelectOne("SELECT ID FROM " . $table_name . " WHERE stations LIKE '" . DBSafe($rec['stations']) . "'");
                         if ($old['ID']) {
                             $rec['ID'] = $old['ID'];
+                            //$rec['FAVORITE']
                             SQLUpdate($table_name, $rec);
                         } else {
                             SQLInsert($table_name, $rec);
@@ -404,16 +405,16 @@ class app_radio extends module
         }
     }
 
-	function export_stations(&$out) {
-		$data = '';
-		$res = SQLSelect('SELECT `stations`, `name` FROM `app_radio` ORDER BY `name`');
-		foreach($res as $item) {
-			$data .= $item['name'].';'.$item['stations'].PHP_EOL;
-		}
-		header('Content-Disposition: attachment; filename=app_radio_export_'.date('d-m-Y_H-i-s').'.txt');
-		header('Content-Type: text/plain');
-		die($data);
-	}
+    function export_stations(&$out) {
+        $data = '';
+        $res = SQLSelect('SELECT name, stations, FAVORITE FROM app_radio ORDER BY FAVORITE DESC, name');
+        foreach($res as $item) {
+                $data .= $item['name'] . ';' . $item['stations'] . ';' . $item['FAVORITE'] . PHP_EOL;
+        }
+        header('Content-Disposition: attachment; filename=app_radio_export_' . date('d-m-Y_H-i-s') . '.txt');
+        header('Content-Type: text/plain');
+        die($data);
+    }
 
     function delete_stations($id)
     {
@@ -421,6 +422,14 @@ class app_radio extends module
         $rec = SQLSelectOne("SELECT * FROM $table_name WHERE ID='$id'");
         SQLExec("DELETE FROM $table_name WHERE ID='" . $rec['ID'] . "'");
     }
+
+    function clear_stations()
+    {
+        $table_name = 'app_radio';
+        SQLExec("TRUNCATE TABLE $table_name");
+        SQLExec("ALTER TABLE $table_name AUTO_INCREMENT=0");
+    }
+
     /**
      * Install
      *
@@ -432,9 +441,9 @@ class app_radio extends module
     {
         $className = 'Radio';
         $objectName = 'RadioSetting';
-		$metodName = 'Control';
+        $metodName = 'Control';
         $properties = array('LastStationID', 'VolumeLevel', 'PlayTerminal', 'On');
-		$code = 'include_once(DIR_MODULES.\'app_radio/app_radio.class.php\');
+        $code = 'include_once(DIR_MODULES.\'app_radio/app_radio.class.php\');
 $app_radio = new app_radio();
 
 if(is_array($params)) {
@@ -502,6 +511,7 @@ $data = <<<EOD
  app_radio: ID int(10) unsigned NOT NULL auto_increment
  app_radio: stations text
  app_radio: name text
+ app_radio: FAVORITE tinyint(1) unsigned
 EOD;
         parent::dbInstall($data);
     }
