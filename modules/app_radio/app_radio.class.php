@@ -51,6 +51,7 @@ class app_radio extends module
         }
         return parent::saveParams($p);
     }
+
      /**
      * getParams
      *
@@ -115,6 +116,7 @@ class app_radio extends module
         $p = new parser(DIR_TEMPLATES . $this->name . "/" . $this->name . ".html", $this->data, $this);
         $this->result = $p->result;
     }
+
     /**
      * BackEnd
      *
@@ -132,7 +134,7 @@ class app_radio extends module
             $out['VER'] = '1.3.2';
             global $select_terminal;
             if ($select_terminal != '')
-                setGlobal('RadioSetting.PlayTerminal', $select_terminal);
+                sg('RadioSetting.PlayTerminal', $select_terminal);
 
             $out['PLAY_TERMINAL'] = getGlobal('RadioSetting.PlayTerminal');
             $res = SQLSelect("SELECT NAME FROM terminals");
@@ -157,13 +159,13 @@ class app_radio extends module
                 $this->edit_stations($out, $this->id);
             }
             if ($this->view_mode == 'delete_stations') {
+                $page = gr('page');
                 $this->delete_stations($this->id);
-                $this->redirect("?");
-                //$page = gr('page');
-                //$this->redirect("?md=app_radio&inst=adm&page=" . $page);
+                $this->redirect("?md=panel&action=app_radio&page=" . $page);
             }
         }
     }
+
     /**
      * FrontEnd
      *
@@ -264,21 +266,18 @@ class app_radio extends module
 	}
 
 	function control($state) {
-		//$log = getLogger($this);
-		//$log->error('control');
-
 		$out = array();
 		global $cmd;
 		$cmd = $state;
 		//echo('control->'.$cmd);
-		if($cmd == 'st_change') {
-			if(gg('RadioSetting.On'))
+		if ($cmd == 'st_change') {
+			if (gg('RadioSetting.On'))
 				$cmd = 'play';
 		}
-		if($cmd == 'play') {
+		if ($cmd == 'play') {
 			$last_stationID = getGlobal('RadioSetting.LastStationID');
 			$res = SQLSelect('SELECT `stations` FROM `app_radio` WHERE `ID` = ' . intval($last_stationID));
-			if($res[0]['stations']) {
+			if ($res[0]['stations']) {
 				$out['PLAY'] = $res[0]['stations'];
 			} else {
 				$res = SQLSelect('SELECT `stations` FROM `app_radio`');
@@ -298,7 +297,7 @@ class app_radio extends module
         global $volume;
 
         $play_terminal = gg('RadioSetting.PlayTerminal');
-        if($cmd == 'play'){
+        if ($cmd == 'play'){
             sg('RadioSetting.On', 1);
             if (preg_match('/101.ru\/api\/channel\/getServers/is', $out['PLAY'])) {
                 //DebMes($out['PLAY']);
@@ -308,11 +307,10 @@ class app_radio extends module
                 //DebMes($out['PLAY']);
             }
             playMedia($out['PLAY'], $play_terminal);
-        }
-         else if($cmd == 'stop'){
+        } elseif ($cmd == 'stop') {
             sg('RadioSetting.On', 0);
             stopMedia($play_terminal);
-        } else if($cmd == 'vol') {
+        } elseif ($cmd == 'vol') {
             sg('RadioSetting.VolumeLevel', $volume);
             setPlayerVolume($play_terminal, $volume);
         }
@@ -322,18 +320,17 @@ class app_radio extends module
     {
         $table_name = 'app_radio';
         $res = SQLSelect("SELECT * FROM $table_name ORDER BY FAVORITE DESC, name");
-        if($res[0]['ID']) {
+        if ($res[0]['ID']) {
             if (!$out['notpaging']) {
                 paging($res, 50, $out); // search result paging
             }
             $out['RESULT'] = $res;
             $total = count($out['RESULT']);
-            for($i = 0; $i < $total; $i++) {
+            for ($i = 0; $i < $total; $i++) {
                 $out['RESULT'][$i]['position'] = $i + 1;
                 $out['RESULT'][$i]['page'] = $out['CURRENT_PAGE'];
             }
         }
-//DebMes($out);
     }
 
     function edit_stations(&$out, $id)
@@ -343,11 +340,8 @@ class app_radio extends module
 
         if ($this->mode == 'update') {
             $ok = 1;
-            //updating 'stations' (text, required)
-            global $stations;
-            global $name;
-            $rec['stations'] = $stations;
-            $rec['name'] = $name;
+            $rec['stations'] = gr('stations');
+            $rec['name'] = gr('name');
             $rec['FAVORITE'] = (int)gr('favorite');
             if ($rec['stations'] == '' || $rec['name'] == '') {
                 $out['ERR_stations'] = 1;
@@ -356,10 +350,10 @@ class app_radio extends module
             //UPDATING RECORD
             if ($ok) {
                 if ($rec['ID']) {
-                    SQLUpdate($table_name, $rec); // update
+                    SQLUpdate($table_name, $rec); //update
                 } else {
                     $new_rec = 1;
-                    $rec['ID'] = SQLInsert($table_name, $rec); // adding new record
+                    $rec['ID'] = SQLInsert($table_name, $rec); //adding new record
                 }
                 $out['OK'] = 1;
             } else {
@@ -388,10 +382,9 @@ class app_radio extends module
                         $rec_ok = 0;
                     }
                     if ($rec_ok) {
-                        $old = SQLSelectOne("SELECT ID FROM " . $table_name . " WHERE stations LIKE '" . DBSafe($rec['stations']) . "'");
+                        $old = SQLSelectOne("SELECT ID FROM " . $table_name . " WHERE stations '" . DBSafe($rec['stations']) . "'");// LIKE
                         if ($old['ID']) {
                             $rec['ID'] = $old['ID'];
-                            //$rec['FAVORITE']
                             SQLUpdate($table_name, $rec);
                         } else {
                             SQLInsert($table_name, $rec);
@@ -408,16 +401,17 @@ class app_radio extends module
     function export_stations(&$out) {
         $data = '';
         $res = SQLSelect('SELECT name, stations, FAVORITE FROM app_radio ORDER BY FAVORITE DESC, name');
-        foreach($res as $item) {
+        foreach ($res as $item) {
                 $data .= $item['name'] . ';' . $item['stations'] . ';' . $item['FAVORITE'] . PHP_EOL;
         }
         header('Content-Disposition: attachment; filename=app_radio_export_' . date('d-m-Y_H-i-s') . '.txt');
         header('Content-Type: text/plain');
-        die($data);
+        die ($data);
     }
 
     function delete_stations($id)
     {
+
         $table_name = 'app_radio';
         $rec = SQLSelectOne("SELECT * FROM $table_name WHERE ID='$id'");
         SQLExec("DELETE FROM $table_name WHERE ID='" . $rec['ID'] . "'");
@@ -446,8 +440,8 @@ class app_radio extends module
         $code = 'include_once(DIR_MODULES.\'app_radio/app_radio.class.php\');
 $app_radio = new app_radio();
 
-if(is_array($params)) {
-    foreach($params as $key=>$value) {
+if (is_array($params)) {
+    foreach ($params as $key=>$value) {
         switch((string)$key) {
             case \'sta\': $app_radio->change_station($params[\'sta\'], $app_radio); break;
             case \'cmd\': $app_radio->control($params[\'cmd\']); break;
@@ -462,7 +456,7 @@ if(is_array($params)) {
 
 		// Class
 		$class_id = addClass($className);
-		if($class_id) {
+		if ($class_id) {
 			$class = SQLSelectOne('SELECT * FROM `classes` WHERE `ID` = '.$class_id);
 			$class['DESCRIPTION'] = 'Онлайн радио';
 			SQLUpdate('classes', $class);
@@ -473,16 +467,16 @@ if(is_array($params)) {
 
 		// Object
 		$object_id = addClassObject($className, $objectName);
-		if($object_id) {
+		if ($object_id) {
 			$object = SQLSelectOne('SELECT * FROM `objects` WHERE `ID` = '.$object_id);
 			$object['DESCRIPTION'] = 'Настройки';
 			SQLUpdate('objects', $object);
 		}
 
 		// Properties
-		foreach($properties as $title) {
+		foreach ($properties as $title) {
 			$properti = SQLSelectOne('SELECT `ID` FROM `properties` WHERE `OBJECT_ID` = '.$object_id.' AND `TITLE` LIKE \''.DBSafe($title).'\'');
-			if(!$properti) {
+			if (!$properti) {
 				$properti = array();
 				$properti['TITLE'] = $title;
 				$properti['OBJECT_ID'] = $object_id;
@@ -491,7 +485,7 @@ if(is_array($params)) {
 		}
 
 		// Code
-		if($meth_id) {
+		if ($meth_id) {
 			injectObjectMethodCode($objectName.'.'.$metodName, $this->name, $code);
 		}
 
